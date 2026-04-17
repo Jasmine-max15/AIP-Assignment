@@ -1,0 +1,94 @@
+// Import required modules
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+
+// Initialize app
+const app = express();
+app.use(express.json());
+app.use(cors());
+
+// Connect to MongoDB database
+mongoose.connect("mongodb://127.0.0.1:27017/employee_management")
+  .then(() => console.log("Database connected successfully"))
+  .catch((error) => console.log("Connection error:", error));
+
+// Create schema for employee
+const employeeSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true
+  },
+  department: {
+    type: String,
+    required: true
+  },
+  salary: {
+    type: Number,
+    required: true
+  }
+});
+
+// Create model
+const Employee = mongoose.model("Employee", employeeSchema);
+
+// ➤ Add new employee
+app.post("/api/employees", async (req, res) => {
+  try {
+    const newEmployee = new Employee(req.body);
+    const result = await newEmployee.save();
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ➤ Get all employees
+app.get("/api/employees", async (req, res) => {
+  try {
+    const data = await Employee.find();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ➤ Get employee by ID
+app.get("/api/employees/:id", async (req, res) => {
+  try {
+    const data = await Employee.findById(req.params.id);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ➤ Update employee
+app.put("/api/employees/:id", async (req, res) => {
+  try {
+    const updated = await Employee.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ➤ Delete employee
+app.delete("/api/employees/:id", async (req, res) => {
+  try {
+    await Employee.findByIdAndDelete(req.params.id);
+    res.json({ message: "Employee deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Start server
+const PORT = 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
